@@ -1,0 +1,6 @@
+{
+  "material":"LT", "crystal_cut":"z", "cladding":"AIR",
+  "geometry":{"thickness_nm":600,"etch_depth_nm":300,"top_width_nm":1800},
+  "process":"SFG", "task_kind":"spectral_2d", "backend":"demo",
+  "wavelength_axes_nm":{"signal_nm":[1500,1550,1600],"idler_nm":[1700,1750,1800]}
+}

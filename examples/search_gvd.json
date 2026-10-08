@@ -1,0 +1,9 @@
+{
+  "material":"LN", "crystal_cut":"x", "cladding":"SIO2",
+  "geometry":{"thickness_nm":600,"etch_depth_nm":300,"top_width_nm":1800},
+  "process":"SHG", "task_kind":"search", "backend":"demo",
+  "search_axes":{"thickness_nm":{"min":550,"max":650,"step":10},"top_width_nm":{"min":1600,"max":2000,"step":50}},
+  "objective":{"metric":"gvd","role":"signal","wavelength_nm":1550,"tolerance":1},
+  "budget":{"max_geometry_count":32,"max_solver_calls":3000},
+  "tolerances_nm":{"thickness_nm":5}
+}

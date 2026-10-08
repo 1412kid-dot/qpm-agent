@@ -1,0 +1,200 @@
+{
+  "fixed": {
+    "prompt": "LN x切、空气包层，600 nm厚刻300 nm、顶宽1200 nm，1550→775倍频，输出周期、效率、色散和GVM。",
+    "task": {
+      "material": "LN",
+      "crystal_cut": "x",
+      "propagation_axis": "Y",
+      "cladding": "AIR",
+      "geometry": {
+        "thickness_nm": 600,
+        "etch_depth_nm": 300,
+        "top_width_nm": 1200,
+        "sidewall_angle_deg": 67
+      },
+      "process": "SHG",
+      "center_nm": 1550,
+      "backend": "demo",
+      "required_metrics": [
+        "period",
+        "normalized_efficiency",
+        "beta1",
+        "gvd",
+        "D",
+        "gvm"
+      ]
+    },
+    "tools": [
+      "skill(qpm-design)",
+      "qpm_conventions",
+      "qpm_environment",
+      "qpm_plan",
+      "qpm_submit",
+      "jobs wait",
+      "qpm_status"
+    ]
+  },
+  "tolerance": {
+    "prompt": "上述结构，厚度与顶宽各±5 nm，画工艺误差棒。",
+    "task": {
+      "material": "LN",
+      "crystal_cut": "x",
+      "propagation_axis": "Y",
+      "cladding": "AIR",
+      "geometry": {
+        "thickness_nm": 600,
+        "etch_depth_nm": 300,
+        "top_width_nm": 1200,
+        "sidewall_angle_deg": 67
+      },
+      "process": "SHG",
+      "center_nm": 1550,
+      "backend": "demo",
+      "tolerances_nm": {
+        "thickness_nm": 5,
+        "top_width_nm": 5
+      }
+    },
+    "tools": [
+      "skill(qpm-design)",
+      "qpm_conventions",
+      "qpm_environment",
+      "qpm_plan",
+      "qpm_submit",
+      "jobs wait",
+      "qpm_status"
+    ]
+  },
+  "search": {
+    "prompt": "在厚度570–630 nm步长10 nm、顶宽1000–1400 nm步长100 nm中寻找1550 nm信号波GVD最接近0的结构。",
+    "task": {
+      "material": "LN",
+      "crystal_cut": "x",
+      "propagation_axis": "Y",
+      "cladding": "AIR",
+      "geometry": {
+        "thickness_nm": 600,
+        "etch_depth_nm": 300,
+        "top_width_nm": 1200,
+        "sidewall_angle_deg": 67
+      },
+      "process": "SHG",
+      "center_nm": 1550,
+      "backend": "demo",
+      "task_kind": "search",
+      "search_axes": {
+        "thickness_nm": {
+          "min": 570,
+          "max": 630,
+          "step": 10
+        },
+        "top_width_nm": {
+          "min": 1000,
+          "max": 1400,
+          "step": 100
+        }
+      },
+      "objective": {
+        "metric": "gvd",
+        "role": "signal",
+        "wavelength_nm": 1550,
+        "tolerance": null
+      }
+    },
+    "tools": [
+      "skill(qpm-design)",
+      "qpm_conventions",
+      "qpm_environment",
+      "qpm_plan",
+      "qpm_submit",
+      "jobs wait",
+      "qpm_status"
+    ]
+  },
+  "spdc_pmf": {
+    "prompt": "775 nm附近泵浦的SPDC：信号与闲频分别1530、1550、1570 nm的二维PMF；各格点泵浦随能量守恒变化。",
+    "task": {
+      "material": "LN",
+      "crystal_cut": "x",
+      "propagation_axis": "Y",
+      "cladding": "AIR",
+      "geometry": {
+        "thickness_nm": 600,
+        "etch_depth_nm": 300,
+        "top_width_nm": 1200,
+        "sidewall_angle_deg": 67
+      },
+      "process": "SPDC",
+      "center_nm": 1550,
+      "backend": "demo",
+      "task_kind": "spectral_2d",
+      "wavelength_axes_nm": {
+        "signal_nm": [
+          1530,
+          1550,
+          1570
+        ],
+        "idler_nm": [
+          1530,
+          1550,
+          1570
+        ]
+      },
+      "required_metrics": [
+        "pmf"
+      ]
+    },
+    "tools": [
+      "skill(qpm-design)",
+      "qpm_conventions",
+      "qpm_environment",
+      "qpm_plan",
+      "qpm_submit",
+      "jobs wait",
+      "qpm_status"
+    ]
+  },
+  "sfg_2d": {
+    "prompt": "信号1500、1550、1600 nm，闲频1800、1900、2000 nm的SFG二维匹配周期。",
+    "task": {
+      "material": "LN",
+      "crystal_cut": "x",
+      "propagation_axis": "Y",
+      "cladding": "AIR",
+      "geometry": {
+        "thickness_nm": 600,
+        "etch_depth_nm": 300,
+        "top_width_nm": 1200,
+        "sidewall_angle_deg": 67
+      },
+      "process": "SFG",
+      "center_nm": 1550,
+      "backend": "demo",
+      "task_kind": "spectral_2d",
+      "wavelength_axes_nm": {
+        "signal_nm": [
+          1500,
+          1550,
+          1600
+        ],
+        "idler_nm": [
+          1800,
+          1900,
+          2000
+        ]
+      },
+      "required_metrics": [
+        "period"
+      ]
+    },
+    "tools": [
+      "skill(qpm-design)",
+      "qpm_conventions",
+      "qpm_environment",
+      "qpm_plan",
+      "qpm_submit",
+      "jobs wait",
+      "qpm_status"
+    ]
+  }
+}

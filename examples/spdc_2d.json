@@ -1,0 +1,6 @@
+{
+  "material":"LN", "crystal_cut":"x", "cladding":"SIO2",
+  "geometry":{"thickness_nm":600,"etch_depth_nm":300,"top_width_nm":1800},
+  "process":"SPDC", "task_kind":"spectral_2d", "backend":"demo", "center_nm":1550,
+  "wavelength_axes_nm":{"signal_nm":[1500,1525,1550,1575,1600],"idler_nm":[1500,1525,1550,1575,1600]}
+}

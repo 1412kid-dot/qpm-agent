@@ -1,0 +1,7 @@
+{
+  "verified_legacy_fingerprints": [
+    "0e9fce4286131244cb7e889d5aaebe8e4c5440a18471eea92ce155264545b08e",
+    "d5d328d4a1698b47b2e640061ddd62e00d485423f6be100413d1715a74e1f54e"
+  ],
+  "note": "Verified prior implementations: solver unchanged; optional standalone baseline path made configurable for public distribution."
+}

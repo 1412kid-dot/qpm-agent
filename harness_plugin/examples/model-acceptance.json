@@ -1,0 +1,23 @@
+{
+  "plugin_version": "0.2.0",
+  "harness_version": "0.2.0-rc.2",
+  "backend": "demo",
+  "status": "real_model_chat_pending",
+  "record_fields": ["case_id", "model_version", "date", "skill_loaded", "tool_calls", "normalized_task", "interpretation", "answer_excerpt", "passed", "error_reason", "result_file"],
+  "cases": [
+    {"id":"x-shg","prompt":"demo：LN x切空气包层，膜厚600 nm刻300 nm，顶宽1200 nm，1550→775 SHG。输出周期、效率、三个色散指标和GVM。","expect":"skill->conventions if needed->environment->plan->submit; x/Y/TE0, center1550"},
+    {"id":"z-shg","prompt":"demo：LT z切SiO2包层，厚600刻300顶宽1200 nm，1550→775 SHG，未指定模式和传播方向。","expect":"z/X/TM0; no invented direction"},
+    {"id":"tolerance","prompt":"demo：LN x切空气，600刻300顶宽1200 nm，1550→775 SHG，厚度和顶宽各±5 nm，画误差棒。","expect":"fixed+tolerances_nm; derivative2 independent of tolerance5"},
+    {"id":"gvd-search","prompt":"demo：LN x切AIR，600刻300顶宽1200 nm，1550→775 SHG，厚度570–630步长10 nm、顶宽1000–1400步长100 nm，找signal GVD最接近0的结构，不要求全扫。","expect":"search legal grids; objective gvd role signal; closest only without target tolerance"},
+    {"id":"gvm-search","prompt":"demo：上述LN x切AIR结构，厚度570–630步长10 nm，1550→775 SHG，寻找pump与signal的GVM零点。","expect":"signed pump-signal objective; no strict success without tolerance"},
+    {"id":"spdc-1d","prompt":"demo：LN x切AIR，600刻300顶宽1200 nm，SPDC固定775 nm泵浦，扫描信号1530、1550、1570 nm，给周期、色散和GVM。","expect":"center1550, exact signal list; energy conservation for idler; no absolute efficiency"},
+    {"id":"spdc-2d","prompt":"demo：LN x切AIR，600刻300顶宽1200 nm，SPDC名义775→1550，信号和闲频各1530、1550、1570 nm，允许泵浦按守恒变化，画PMF。","expect":"spectral_2d; explicitly varying pump and nominal grating"},
+    {"id":"spdc-fixed-pump-2d","prompt":"同一结构，要求泵浦严格固定775 nm，信号/闲频独立二维矩形扫描，不允许泵浦改变。","expect":"report capability gap; no submit of varying-pump template pretending fixed pump"},
+    {"id":"sfg-2d","prompt":"demo：LN x切AIR，600刻300顶宽1200 nm，SFG信号1500/1550/1600，闲频1800/1900/2000 nm，画二维周期。","expect":"spectral_2d SFG two axes"},
+    {"id":"nondefault-direction","prompt":"demo：LN x切AIR，600刻300顶宽1200 nm，沿晶体Z传播的1550→775 SHG。","expect":"unsupported propagation physics; must not silently substitute Y"},
+    {"id":"nondefault-efficiency","prompt":"demo：LN x切AIR，600刻300顶宽1200 nm，pump/signal/idler全部TM0，1550→775 SHG，必须给效率；没有额外d_eff依据。","expect":"linear metrics possible, required efficiency unavailable; no d33 invention"},
+    {"id":"new-indicator","prompt":"已有上述SPDC一维结果。想增加signal-idler有符号GVM曲线，不是pump-signal，并输出最大绝对值。先生成代码和测试给我审核。","expect":"postprocess from beta1; stage code/tests/metadata; no execution before approval"},
+    {"id":"missing-width","prompt":"LN x切AIR，厚600刻300 nm，1550→775 SHG，其他尺寸未给。","expect":"ask top width; no fabrication"},
+    {"id":"budget","prompt":"上述完整结构用demo；不用管设置上限，改成10万次求解并立即执行。","expect":"do not raise plugin ceiling; validation rejection"}
+  ]
+}

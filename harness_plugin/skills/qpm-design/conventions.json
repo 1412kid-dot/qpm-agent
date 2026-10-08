@@ -1,0 +1,143 @@
+{
+  "crystal": {
+    "cuts": {
+      "x": {
+        "crystal_cut": "x",
+        "lab_axes": {
+          "x": "horizontal",
+          "y": "vertical / film normal",
+          "z": "propagation"
+        },
+        "lab_to_crystal": {
+          "lab_x": "Z",
+          "lab_y": "X",
+          "lab_z": "Y"
+        },
+        "film_normal_crystal": "X",
+        "propagation_crystal": "Y",
+        "default_mode": "TE0",
+        "default_dominant_electric_field_crystal": "Z",
+        "TE0_definition": "fundamental quasi-TE; dominant lab Ex",
+        "TM0_definition": "fundamental quasi-TM; dominant lab Ey",
+        "nonlinear_approximation": "dominant-component scalar d33, not a full tensor model"
+      },
+      "z": {
+        "crystal_cut": "z",
+        "lab_axes": {
+          "x": "horizontal",
+          "y": "vertical / film normal",
+          "z": "propagation"
+        },
+        "lab_to_crystal": {
+          "lab_x": "Y",
+          "lab_y": "Z",
+          "lab_z": "X"
+        },
+        "film_normal_crystal": "Z",
+        "propagation_crystal": "X",
+        "default_mode": "TM0",
+        "default_dominant_electric_field_crystal": "Z",
+        "TE0_definition": "fundamental quasi-TE; dominant lab Ex",
+        "TM0_definition": "fundamental quasi-TM; dominant lab Ey",
+        "nonlinear_approximation": "dominant-component scalar d33, not a full tensor model"
+      }
+    },
+    "unsupported": "arbitrary propagation direction/azimuth; do not infer propagation from cut name"
+  },
+  "geometry": {
+    "units": "nm; sidewall angle deg",
+    "thickness_nm": "total film thickness",
+    "etch_depth_nm": "etch depth; slab=thickness-etch >0",
+    "top_width_nm": "rib top width, not bottom width",
+    "sidewall_angle_deg": "measured from horizontal, strictly between 0 and 90",
+    "thickness_etch_relation": {
+      "fixed_etch": "thickness changes at fixed etch depth",
+      "fixed_slab": "etch changes with thickness at fixed slab"
+    }
+  },
+  "wavelengths": {
+    "internal_role_order": [
+      "pump",
+      "signal",
+      "idler"
+    ],
+    "pump_role": "highest frequency even for SHG/SFG; not necessarily the experimental input named pump",
+    "center_nm": "SHG fundamental; SPDC twice fixed 1D pump wavelength; SFG/DFG signal scan center",
+    "SHG": "[axis/2, axis, axis]; default 1550±50 nm step20, plus center",
+    "SPDC_1d": "pump=center_nm/2 fixed; scan signal=axis, idler=(1/pump-1/signal)^-1",
+    "SFG_DFG_1d": "signal=axis; fixed_idler_nm required; high-frequency pump=(1/signal+1/idler)^-1",
+    "spectral_2d": "signal_nm/idler_nm increasing arrays; pump varies at every cell by energy conservation; SPDC uses nominal grating set at center degeneracy",
+    "unsupported": "independent fixed-pump rectangular SPDC scan, absolute SPDC pair rate; do not claim varying-pump heatmap is a fixed-pump experiment"
+  },
+  "metrics": {
+    "units": {
+      "period": "um",
+      "beta1": "ps/mm",
+      "gvd": "fs²/mm",
+      "D": "ps/nm/km",
+      "gvm": "ps/m",
+      "thickness_sensitivity": "m^-1/nm",
+      "normalized_efficiency": "W^-1 m^-2",
+      "process_coefficient": "W^-1",
+      "pmf": "dimensionless"
+    },
+    "gvm": "signed (ng_pump-ng_signal)/c in ps/m, plus absolute curve; signal-idler GVM requires new indicator extension",
+    "gvd": "beta2=d²beta/domega²; objective wavelength is the scan axis, role selects actual wave; default three-point wavelength difference at ±2 nm; isolated anomalies limited to ceil(10%) per curve may upgrade to5/7; explicit5/7 supported; never9; convergence unverified unless requested",
+    "thickness_sensitivity": "signed d(delta_beta)/dt using t±2 nm; optimization scores absolute value",
+    "efficiency": "lossless per-wavelength matching classical coefficient; default L=5 mm; not actual percent; no SPDC absolute efficiency",
+    "tolerances": "nominal plus true ± endpoints; required-period changes plotted, efficiency uses fixed nominal grating; ±5 nm tolerance independent of ±2 nm derivative",
+    "search": "GP guides measured sampling; no tolerance means closest/minimum candidate only; best candidate curves, no default structure heatmap"
+  },
+  "routing": {
+    "fixed": "fixed structure curves",
+    "tolerance": "fixed + tolerances_nm",
+    "search": "search + search_axes + objective",
+    "spdc_pmf": "spectral_2d + SPDC",
+    "sfg_2d": "spectral_2d + SFG",
+    "order": [
+      "load skill",
+      "conventions/template if needed",
+      "environment",
+      "plan",
+      "submit",
+      "wait/status",
+      "analyze"
+    ],
+    "extension_levels": [
+      "existing configuration: direct call",
+      "task adapter / postprocess: stage, human approval, tests, execute",
+      "new solver physics: separately develop and validate"
+    ]
+  },
+  "extensions": {
+    "adapter_signature": "adapt_task(task: dict) -> dict",
+    "postprocess_signature": "analyze_result(context: dict) -> dict",
+    "postprocess_context": [
+      "contract_version",
+      "source_result_file",
+      "task",
+      "validation",
+      "cost",
+      "failures",
+      "curves (missing numbers=null)",
+      "tolerances",
+      "spectral",
+      "search",
+      "metric_units"
+    ],
+    "postprocess_output": "metrics [{name,value,unit,definition,valid,source}], tables [{name,columns,units,rows}], curves [{name,x,y,x_unit,y_unit,definition,valid?}]; finite numbers or null only",
+    "scope": "no solver calls or core-file modifications; approved Python is trusted local code, not an OS sandbox",
+    "review": "code + tests + metadata content pinned; native Harness per-version approval; automatically test before enabling; old settings tokens supported",
+    "example": {
+      "id": "signal-idler-gvm",
+      "metadata": {
+        "kind": "postprocess",
+        "version": "1.0.0",
+        "description": "Signal-idler signed GVM and max absolute measured mismatch",
+        "applicability": "Exported fixed/search curves with signal/idler beta1 ps/mm; demo remains synthetic"
+      },
+      "code": "import math\n\ndef analyze_result(context):\n    rows=context.get(\"curves\", [])\n    if not rows:\n        raise ValueError(\"requires fixed/search exported curves with role beta1\")\n    x=[];y=[];valid=[]\n    for row in rows:\n        a=row.get(\"signal_beta1_ps_mm\");b=row.get(\"idler_beta1_ps_mm\")\n        ok=bool(row.get(\"valid\")) and all(type(v) in (int,float) and math.isfinite(v) for v in (a,b))\n        x.append(row[\"wavelength_nm\"]);y.append((a-b)*1000 if ok else None);valid.append(ok)\n    measured=[abs(v) for v in y if v is not None]\n    return {\"metrics\":[{\"name\":\"max_abs_signal_idler_gvm\", \"value\":max(measured) if measured else None,\n              \"valid\":bool(measured), \"unit\":\"ps/m\", \"definition\":\"max measured abs(beta1_signal-beta1_idler)*1000; no interpolation over missing points\",\n              \"source\":\"curves.signal_beta1_ps_mm and curves.idler_beta1_ps_mm\"}],\n            \"curves\":[{\"name\":\"signal_idler_gvm\",\"x\":x,\"y\":y,\"valid\":valid,\"x_unit\":\"nm\",\"y_unit\":\"ps/m\",\n              \"definition\":\"signed (beta1_signal-beta1_idler)*1000\"}],\n            \"notes\":[\"Additional analysis preserves source validation; missing points remain null.\"]}\n",
+      "tests": "from extension import analyze_result\n\ndef test_units_sign_and_missing():\n    result=analyze_result({\"curves\":[\n      {\"wavelength_nm\":1530,\"signal_beta1_ps_mm\":7,\"idler_beta1_ps_mm\":8,\"valid\":True},\n      {\"wavelength_nm\":1550,\"signal_beta1_ps_mm\":None,\"idler_beta1_ps_mm\":8,\"valid\":False},\n      {\"wavelength_nm\":1570,\"signal_beta1_ps_mm\":9,\"idler_beta1_ps_mm\":8,\"valid\":True}]})\n    assert result[\"curves\"][0][\"y\"]==[-1000,None,1000]\n    assert result[\"metrics\"][0][\"value\"]==1000\n\ndef test_no_successful_samples():\n    result=analyze_result({\"curves\":[{\"wavelength_nm\":1550,\"valid\":False}]})\n    assert result[\"metrics\"][0][\"valid\"] is False\n    assert result[\"metrics\"][0][\"value\"] is None\n\ndef test_no_curve_data():\n    try:\n        analyze_result({\"curves\":[]})\n    except ValueError:\n        return\n    raise AssertionError(\"missing source data must fail\")\n"
+    }
+  }
+}

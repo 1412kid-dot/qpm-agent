@@ -1,0 +1,284 @@
+{
+  "schema_version": "0.1",
+  "package": "qpm_simulation",
+  "solver_side_effects_on_import": false,
+  "design_contract": "qpm-design/1",
+  "convention_topics": [
+    "overview",
+    "crystal",
+    "geometry",
+    "wavelengths",
+    "metrics",
+    "routing",
+    "extensions",
+    "templates"
+  ],
+  "extension_interfaces": [
+    "adapt_task(dict)->dict",
+    "analyze_result(context)->analysis"
+  ],
+  "combinations": [
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; real COMSOL validation pending"
+    }
+  ],
+  "entry_points": [
+    "describe_capabilities",
+    "validate_task",
+    "plan_task",
+    "run_task",
+    "postprocess",
+    "search"
+  ],
+  "processes": [
+    "SHG",
+    "SFG",
+    "DFG",
+    "SPDC"
+  ],
+  "metrics": {
+    "beta1": "ps/mm",
+    "gvd": "fs²/mm",
+    "D": "ps/nm/km",
+    "gvm": "ps/m",
+    "thickness_sensitivity": "d(delta_beta)/dt, m^-1/nm",
+    "period": "um",
+    "normalized_efficiency": "W^-1 m^-2",
+    "process_coefficient": "W^-1"
+  },
+  "plots": [
+    "fixed-structure curves",
+    "real tolerance endpoint envelopes",
+    "SPDC spectral PMF heatmap",
+    "SFG spectral period heatmap"
+  ],
+  "limitations": [
+    "demo data synthetic",
+    "no absolute SPDC pair rate",
+    "scalar dominant-component nonlinear model only",
+    "no general propagation azimuth",
+    "real x-cut/z-cut solver acceptance pending",
+    "Harness integration distributed as a separate plugin bundle"
+  ]
+}

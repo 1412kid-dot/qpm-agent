@@ -1,0 +1,6 @@
+{
+  "kind": "postprocess",
+  "version": "1.0.0",
+  "description": "Signal-idler signed GVM and max absolute measured mismatch",
+  "applicability": "Exported fixed/search curves with signal/idler beta1 ps/mm; demo remains synthetic"
+}

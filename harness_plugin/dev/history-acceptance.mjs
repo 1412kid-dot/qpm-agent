@@ -1,0 +1,30 @@
+import {Context,Service} from '../.fixtures/runtime/node_modules/@deepseek-ai/cordis/lib/index.js';
+import Local from '../.fixtures/runtime/node_modules/@deepseek-ai/dsh-subprocess-local/lib/index.js';
+import Jobs from '../.fixtures/runtime/node_modules/@deepseek-ai/dsh-jobs-local/lib/index.js';
+import Qpm from '../.fixtures/runtime/node_modules/dsh-qpm-agent/lib/index.js';
+import fs from 'node:fs/promises';import path from 'node:path';import {randomUUID,createHash} from 'node:crypto';
+const ctx=new Context(),workspace=path.join(path.resolve('.fixtures/workspaces'),'.qpm-history-'+randomUUID().slice(0,8));await fs.mkdir(workspace,{recursive:true});
+const owner={id:'history-acceptance',ctx,session:{header:{cwd:workspace}}};
+class Agents extends Service{constructor(c){super(c,'agents');}get(id){return id===owner.id?owner:undefined;}}
+new Agents(ctx);new Local(ctx);new Jobs(ctx,{maxConcurrentJobsPerOwner:1,retainBytes:65536,settledRetainBytes:16384,pumpPollMs:20});ctx.jobs.attachController('history');
+const legacy=path.resolve(process.env.QPM_HISTORY_ROOT||'../results');
+new Qpm(ctx,{pythonExecutable:(process.env.QPM_TEST_PYTHON||'python'),pythonModuleRoot:path.resolve('..'),outputRoot:legacy,historySources:'[]',extensionsRoot:path.join(workspace,'extensions'),defaultBackend:'demo',enableComsol:false,lengthMm:5,wavelengthStepNm:20,dispersionStepNm:2,fwDerivativeNm:2,shDerivativeNm:1,thicknessDerivativeNm:2,maxGeometryCount:32,maxSolverCalls:1000,maxWallTimeS:1800,threads:4,comsolVersion:'6.4',comsolBin:'',approvedExtensions:''});
+const exec={agent:owner,signal:new AbortController().signal},r=ctx.qpmRuntime,inventory=await r.historySources(exec);
+const originals=inventory.runs.filter(v=>path.resolve(v.source_root)===legacy&&v.readable),hashes=new Map();
+for(const run of originals){const file=path.join(run.output_dir,'result.json');hashes.set(file,createHash('sha256').update(await fs.readFile(file)).digest('hex'));await r.historical(exec,run.run_id);}
+if(originals.length<9)throw Error('expected at least 9 actual legacy results');
+const selected=originals.find(v=>v.task.backend==='demo');if(!selected)throw Error('no demo source for safe resume acceptance');
+const copied=path.join(workspace,'copies','legacy-copy');await fs.cp(selected.output_dir,copied,{recursive:true});
+await r.historySources(exec,{add:path.dirname(copied)});
+const copy=(await r.listRuns(exec)).find(v=>path.resolve(v.output_dir)===path.resolve(copied));
+const source=path.join(copied,'result.json'),before=await fs.readFile(source);
+const exported=await r.postprocess(undefined,owner.id,exec.signal,exec,copy.run_id);if(!exported.figures.length)throw Error('postprocess failed');
+const plotted=await r.plotPreset(exec,{run_id:copy.run_id,name:'legacy_gvd',preset:{series:[{metric:'signal_gvd_fs2_mm'}]}});if(!plotted.figures.length)throw Error('preset failed');
+if(!(await fs.readFile(source)).equals(before))throw Error('copy raw result was overwritten');
+await fs.rename(source,path.join(copied,'previous-result.json'));
+let record={};try{record=JSON.parse(await fs.readFile(path.join(copied,'plugin-job.json'),'utf8'));}catch{}record.status='running';await fs.writeFile(path.join(copied,'plugin-job.json'),JSON.stringify(record));
+const resumed=await r.resume(ctx,exec,copy.run_id);await ctx.jobs.wait(resumed.job_id,60000,owner.id,exec.signal);
+if(r.status(resumed.job_id,owner.id).status!=='completed')throw Error(JSON.stringify(r.status(resumed.job_id,owner.id)));
+for(const [file,digest] of hashes)if(createHash('sha256').update(await fs.readFile(file)).digest('hex')!==digest)throw Error('actual legacy result changed');
+const receipt={actual_legacy_results_read:originals.length,legacy_raw_hashes_unchanged:true,copy_postprocess:true,copy_preset:true,copy_resume:true,actual_COMSOL_calls:0,workspace};
+await fs.writeFile('.fixtures/history-acceptance.json',JSON.stringify(receipt,null,2));console.log(receipt);await ctx.fiber.dispose();

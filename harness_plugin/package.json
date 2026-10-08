@@ -1,0 +1,62 @@
+{
+  "name": "dsh-qpm-agent",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "LN/LT QPM design tools and Chinese agent preset for DeepSeek Harness",
+  "exports": {
+    ".": "./lib/index.js",
+    "./tools": "./lib/tools.js",
+    "./skill": "./lib/skill.js",
+    "./client": "./lib/client.js"
+  },
+  "files": [
+    "lib",
+    "skills",
+    "cordis.patch.yml",
+    "README.md",
+    "COMPATIBILITY.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/schemastery": "3.18.4",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/schemastery": "3.18.4",
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2"
+  },
+  "scripts": {
+    "build": "node dev/build.cjs",
+    "test": "node --test tests/*.test.mjs",
+    "pack": "node dev/pack.cjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "QPM",
+    "COMSOL",
+    "LN",
+    "LT"
+  ],
+  "license": "MIT",
+  "author": "1412kid-dot",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1412kid-dot/qpm-agent.git"
+  }
+}

@@ -1,0 +1,6 @@
+*.ps1 -text
+*.cmd -text
+*.png binary
+*.zip binary
+*.tgz binary
+*.whl binary

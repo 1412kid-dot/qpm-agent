@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qpm-simulation"
+version = "0.2.0"
+description = "Explicit QPM design tools for LN/LT COMSOL automation"
+license = {file = "LICENSE"}
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.0", "scipy>=1.13", "pandas>=2.2", "matplotlib>=3.8"]
+
+[project.optional-dependencies]
+comsol = ["MPh>=1.3.1", "JPype1>=1.5"]
+test = ["pytest>=8"]
+
+[project.scripts]
+qpm-sim = "qpm_simulation.__main__:main"
+
+[tool.setuptools]
+packages = ["qpm_simulation"]
+py-modules = ["dispersion_core", "LN_LT_COMSOL_SHG_QPM_Automation", "LN_LT_COMSOL_SFG_Period_Automation", "LN_LT_COMSOL_SPDC_PMF_Automation", "LN_LT_COMSOL_Dispersion_Automation", "LN_LT_COMSOL_GVM_Automation", "LN_LT_Nonlinear_Efficiency", "TH_sensitivity_COMSOL"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+
+[tool.setuptools.package-data]
+qpm_simulation = ["cache_compatibility.json"]

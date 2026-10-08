@@ -1,0 +1,6 @@
+{
+  "material":"LN", "crystal_cut":"x", "cladding":"AIR",
+  "geometry":{"thickness_nm":600,"etch_depth_nm":300,"top_width_nm":1800},
+  "process":"SHG", "center_nm":1550, "backend":"demo",
+  "tolerances_nm":{"thickness_nm":5,"top_width_nm":10}
+}
