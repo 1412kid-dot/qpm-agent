@@ -1,5 +1,6 @@
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import {readFileSync} from 'node:fs';
+import {installDelivery} from './delivery.js';
 // Convert standard JSON Schema required arrays to Harness parameter DSL flags.
 function parameter(schema,required=false){
  const {required:keys,properties,items,oneOf,...rest}=schema;
@@ -8,6 +9,7 @@ function parameter(schema,required=false){
   ...(items?{items:parameter(items)}:{}),...(oneOf?{oneOf:oneOf.map(s=>parameter(s))}:{})};
 }
 const taskContract=JSON.parse(readFileSync(new URL('../skills/qpm-design/task.schema.json',import.meta.url),'utf8'));
+const studyContract=JSON.parse(readFileSync(new URL('../skills/qpm-design/study.schema.json',import.meta.url),'utf8'));
 export const inject=['tools','jobs','qpmRuntime'];
 // Harness validates the value before the renderer calls JSON.stringify.
 // Keep optional fields explicit and missing numeric data null at this boundary.
@@ -22,10 +24,23 @@ export function jsonSafe(value,seen=new Set()){
  finally{seen.delete(value);}
 }
 export function apply(ctx){
+ const delivery=installDelivery(ctx);
  const register=(name,description,parameters,execute)=>ctx.effect(()=>ctx.tools.register(defineTool({name,description,parameters,
-  output:{schema:{type:'json'},render:(_args,value)=>[{type:'text',text:JSON.stringify(jsonSafe(value))}]},execute:async(a,e)=>jsonSafe(await execute(a,e))})));
+  output:{schema:{type:'json'},render:(_args,value)=>[{type:'text',text:JSON.stringify(jsonSafe(value))}]},execute:async(a,e)=>{delivery.before(name,e,a);return jsonSafe(await delivery.after(name,e,a,await execute(a,e)));}})));
  const task={task:parameter(taskContract,true)};
  const id={job_id:{type:'string',required:true}};
+ const studyId={study_id:{type:'string',required:true}};
+ register('qpm_delivery','读取完整事实摘要，供最终交付；历史结果只读，不启动求解器。指定run_id或当前job_id。',{run_id:{type:'string'},job_id:{type:'string'}},(a,e)=>ctx.qpmRuntime.delivery(e,a));
+ register('qpm_process','分页读取持久研究的实际事件；不推测未记录的决策。',{...studyId,after_seq:{type:'number'},limit:{type:'number'}},(a,e)=>ctx.qpmRuntime.research(e,{command:'events',...a}));
+ register('qpm_study_create','建立持久研究任务：先查capabilities和conventions。spec包含task、goal、constraints、budget、permissions、knowledge；预算贯穿所有批次，不启动求解器。',
+  {spec:parameter(studyContract,true)},(a,e)=>ctx.qpmRuntime.research(e,{command:'create',...a}));
+ register('qpm_studies','列出当前工作区研究任务，跨会话恢复入口',{},(_a,e)=>ctx.qpmRuntime.research(e,{command:'list'}));
+ register('qpm_study_status','读取研究目标、候选、累计成本、剩余预算和最近证据。不启动求解器。',studyId,(a,e)=>ctx.qpmRuntime.research(e,{command:'status',...a}));
+ register('qpm_study_result','读取研究批次结果；run_id从研究状态获取，不猜测。',{...studyId,run_id:{type:'string',required:true}},(a,e)=>ctx.qpmRuntime.research(e,{command:'result',...a}));
+ register('qpm_study_diagnose','检查实际结果的缺失、模式、求导与收敛证据；建议是待模型选择的动作。',{...studyId,run_id:{type:'string'}},(a,e)=>ctx.qpmRuntime.research(e,{command:'diagnose',...a}));
+ register('qpm_study_propose','按工艺格点和已有实算建议下一批候选；GP预测不是仿真结果。',{...studyId,count:{type:'number'}},(a,e)=>ctx.qpmRuntime.research(e,{command:'propose',...a}));
+ register('qpm_study_step','执行一项研究动作：evaluate、refine、verify、resume、recover、pause、finalize、cancel。每批后读取证据再选择下一步。计算动作带reason和已有run_id的evidence；geometry不得超出工艺约束。返回后台job_id，用jobs等待和qpm_status读取。',
+  {...studyId,action:{type:'object',required:true,additionalProperties:false,properties:{kind:{type:'string',required:true,enum:['evaluate','refine','verify','resume','recover','pause','finalize','cancel']},reason:{type:'string'},evidence:{type:'array',items:{type:'string'}},geometry:parameter(taskContract.properties.geometry),stencil_points:{type:'number',enum:[3,5,7]}}}},(a,e)=>ctx.qpmRuntime.researchStep(ctx,e,a));
  register('qpm_plot','跨run绘图；所有登记历史来源只读，输出当前工作区。不启动COMSOL、不耗仿真预算。script仅支持plot.option与plot.series字面量调用',{name:{type:'string'},sources:{type:'array',items:{type:'object',additionalProperties:false,properties:{alias:{type:'string',required:true},run_id:{type:'string',required:true}}}},preset:{type:'object',additionalProperties:true,description:'series:[{source,metric,x,dataset,label,color,linestyle,marker,axis:left/right,kind:line/scatter,unit,scale,normalize,x_range,interpolate_nm,smooth_window}],layout:overlay/subplots/dual_axis/heatmaps,formats:[png,svg,pdf],title,xlabel,ylabel,figsize,font,fontsize,legend_location,xlim,ylim,xticks,yticks,xscale,yscale,errors:true/envelope,metric_units,metric_definitions'},script:{type:'string'},output_dir:{type:'string'}},(a,e)=>ctx.qpmRuntime.plot(e,a));
  register('qpm_plot_environment','查询独立绘图API、系统字体、输出位置与限制，不启动求解器',{},(_a,e)=>ctx.qpmRuntime.plotEnvironment(e));
  register('qpm_plot_preset','从历史结果重新绘图并保存命名预设；同单位曲线可叠加，缺失点保持断开；不启动求解器',{run_id:{type:'string',required:true},name:{type:'string',required:true},preset:{type:'object',additionalProperties:true,description:'series:[{metric,label,color,linestyle,dataset}],title,xlabel,ylabel,xlim,ylim,xscale,yscale,legend,dpi,heatmap,xticks,yticks,errors；省略则加载已保存预设'}},(a,e)=>ctx.qpmRuntime.plotPreset(e,a));
@@ -37,7 +52,7 @@ export function apply(ctx){
  register('qpm_capabilities','查询已实现能力、物理限制和验证状态，不启动COMSOL',{},()=>ctx.qpmRuntime.query('capabilities'));
  register('qpm_environment','只读检查Python与仿真依赖，不启动COMSOL',{},(_a,e)=>ctx.qpmRuntime.query('doctor',undefined,e.signal,e));
  register('qpm_conventions','只读查询QPM规范/模板，不启动求解器。陌生任务先查templates；晶向疑问查crystal，波长角色查wavelengths。执行前加载skill(qpm-design)。',{
-  topic:{type:'string',enum:['overview','crystal','geometry','wavelengths','metrics','routing','extensions','templates'],description:'规范主题，默认overview'},
+  topic:{type:'string',enum:['overview','crystal','geometry','wavelengths','metrics','routing','extensions','templates','research','quality','plotting'],description:'规范主题；自主研究查research，异常查quality，绘图列名和dataset查plotting'},
   template:{type:'string',enum:['fixed','tolerance','search','spdc_pmf','sfg_2d'],description:'仅topic=templates时选择一类任务示例'}},(a,e)=>ctx.qpmRuntime.query('conventions',a,e.signal));
  register('qpm_plan','执行前校验并解释晶轴/波长角色/默认值/可用指标。fixed曲线；search筛选结构；spectral_2d仅SFG/SPDC。将明确输出填写required_metrics，缺口不得忽略。预算不超过设置。',task,(a,e)=>ctx.qpmRuntime.query('plan',a.task,e.signal,e));
  register('qpm_estimate','只读估算必要采点、缓存和用时范围；不启动COMSOL、不提高预算',task,(a,e)=>ctx.qpmRuntime.query('estimate',a.task,e.signal,e));

@@ -4,8 +4,6 @@ root=pathlib.Path(__file__).resolve().parents[1]
 version=json.loads((root/'package.json').read_text(encoding='utf-8'))['version']
 archive=root/f'dist/QPM-Agent-{version}-Windows-Harness-0.2.0-rc.2.zip'
 harness=pathlib.Path(os.environ.get('QPM_HARNESS_ROOT','E:/Deepseek Harness'))
-harness=pathlib.Path(os.environ.get('QPM_HARNESS_ROOT','E:/Deepseek Harness'))
-harness=pathlib.Path(os.environ.get('QPM_HARNESS_ROOT','E:/Deepseek Harness'))
 python=pathlib.Path(os.environ.get('QPM_TEST_PYTHON',sys.executable))
 engines=[('ps51',pathlib.Path(os.environ['SystemRoot'])/'System32/WindowsPowerShell/v1.0/powershell.exe'),('ps7',pathlib.Path(subprocess.check_output(['where.exe','pwsh'],text=True).splitlines()[0]))]
 reports=[]

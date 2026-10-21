@@ -1,6 +1,0 @@
-{
-  "material":"LN", "crystal_cut":"x", "cladding":"SIO2",
-  "geometry":{"thickness_nm":400,"etch_depth_nm":200,"top_width_nm":2000,"sidewall_angle_deg":67},
-  "process":"SHG", "center_nm":1560, "wavelengths_nm":[1560], "backend":"demo",
-  "assumptions":["Regression template from legacy SHG default geometry; confirm against the original result before real execution"]
-}

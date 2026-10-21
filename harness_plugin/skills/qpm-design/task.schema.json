@@ -63,6 +63,14 @@
       ],
       "description": "Frequency conversion process"
     },
+    "phase_matching_direction": {
+      "type": "string",
+      "enum": [
+        "FORWARD",
+        "BACKWARD"
+      ],
+      "description": "Default FORWARD; BACKWARD reverses low2/idler. High,low1,low2 signs=(+,+,-), standalone SHG low1,low2,high=(+,-,+)."
+    },
     "center_nm": {
       "type": "number",
       "description": "SHG fundamental center; SPDC twice fixed pump; SFG/DFG signal center. 775→1550 SPDC: center_nm=1550."
@@ -152,9 +160,10 @@
       "enum": [
         "fixed",
         "search",
-        "spectral_2d"
+        "spectral_2d",
+        "jsa"
       ],
-      "description": "Curves / structure optimization / SFG or SPDC heatmap"
+      "description": "Curves / search / spectral heatmap / relative complex SPDC JSA"
     },
     "search_axes": {
       "type": "object",
@@ -454,6 +463,113 @@
       "additionalProperties": false,
       "description": "2D pump VARIES by energy conservation; fixed-pump rectangular SPDC not supported"
     },
+    "pump_envelope": {
+      "type": "object",
+      "properties": {
+        "shape": {
+          "type": "string",
+          "enum": [
+            "gaussian",
+            "sech2",
+            "top_hat",
+            "custom"
+          ],
+          "description": "Frequency-domain intensity shape; zero phase for analytic shapes"
+        },
+        "center_wavelength_nm": {
+          "type": "number",
+          "description": "Positive finite value; see qpm_conventions for unit and role."
+        },
+        "intensity_fwhm_thz": {
+          "type": "number",
+          "description": "Positive finite value; see qpm_conventions for unit and role."
+        },
+        "intensity_fwhm_nm": {
+          "type": "number",
+          "description": "Positive finite value; see qpm_conventions for unit and role."
+        },
+        "axis": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "description": "Positive finite value; see qpm_conventions for unit and role."
+          },
+          "description": "Custom increasing spectral axis"
+        },
+        "axis_unit": {
+          "type": "string",
+          "enum": [
+            "THz",
+            "nm"
+          ],
+          "description": "Custom spectral coordinate"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Custom magnitude samples"
+        },
+        "value_kind": {
+          "type": "string",
+          "enum": [
+            "intensity_density",
+            "amplitude_density"
+          ],
+          "description": "Density per declared coordinate"
+        },
+        "phase_rad": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "Optional custom phase, radians"
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "description": "JSA pump: exactly one positive intensity FWHM for analytic shapes"
+    },
+    "jsa": {
+      "type": "object",
+      "properties": {
+        "signal_frequency_thz": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "description": "Positive finite value; see qpm_conventions for unit and role."
+          },
+          "description": "Increasing signal frequencies"
+        },
+        "idler_frequency_thz": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "description": "Positive finite value; see qpm_conventions for unit and role."
+          },
+          "description": "Increasing idler frequencies"
+        },
+        "grating_period_um": {
+          "type": "number",
+          "description": "Positive finite value; see qpm_conventions for unit and role."
+        },
+        "qpm_order": {
+          "type": "integer"
+        },
+        "reference_signal_nm": {
+          "type": "number",
+          "description": "Positive finite value; see qpm_conventions for unit and role."
+        },
+        "reference_idler_nm": {
+          "type": "number",
+          "description": "Positive finite value; see qpm_conventions for unit and role."
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "description": "Fixed signed grating order, or matching at explicit reference pair; defaults to axis middle samples, independent of pump envelope"
+    },
     "spectral_solve_step_nm": {
       "type": "number",
       "description": "spectral_solve_step_nm in nm; default display20, thickness2, low2, high1, dispersion2"
@@ -554,7 +670,9 @@
           "thickness_sensitivity",
           "normalized_efficiency",
           "process_coefficient",
-          "pmf"
+          "pmf",
+          "jsa",
+          "jsi"
         ],
         "description": "Explicitly required output; unsupported requests rejected, not dropped"
       },

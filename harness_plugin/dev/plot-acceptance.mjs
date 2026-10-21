@@ -4,7 +4,7 @@ import Qpm from '../.fixtures/runtime/node_modules/dsh-qpm-agent/lib/index.js';
 import fs from 'node:fs/promises';import path from 'node:path';import {randomUUID,createHash} from 'node:crypto';
 const base=path.join(path.resolve('.fixtures/workspaces'),'.qpm-plot-'+randomUUID().slice(0,8));const workspace=path.join(base,'中文 工作区'),history=path.join(base,'历史');await fs.mkdir(history,{recursive:true});await fs.mkdir(workspace,{recursive:true});
 const ctx=new Context();new Local(ctx);const owner={id:'plot-test',session:{header:{cwd:workspace}}},exec={agent:owner,signal:new AbortController().signal};
-new Qpm(ctx,{pythonExecutable:(process.env.QPM_TEST_PYTHON||'python'),pythonModuleRoot:path.resolve('..'),outputRoot:history,historySources:'[]'});
+new Qpm(ctx,{pythonExecutable:(process.env.QPM_TEST_PYTHON||'python'),pythonModuleRoot:path.resolve(process.env.QPM_CORE_ROOT||'..'),outputRoot:history,historySources:'[]'});
 ctx.provide('sandboxPolicy',{resolve:()=>({mode:'workspace-write',workspaceRoot:workspace})});
 const r=ctx.qpmRuntime;
 for(let i=0;i<2;i++){const dir=path.join(history,'r'+i);await fs.mkdir(dir);await fs.writeFile(path.join(dir,'result.json'),JSON.stringify({curves:[0,1,2].map(j=>({wavelength_nm:1500+j*(10+i),signal_gvd_fs2_mm:j===1?null:j,period_um:10+j})),spectral:{x_nm:[1,2],y_nm:[3,4],values:[[1,null],[2,3]],metric:'PMF',x_label:'signal nm',y_label:'idler nm'},validation:{data_kind:i?'real acceptance pending':'SYNTHETIC DEMO'},task:{material:'LN'}}));}

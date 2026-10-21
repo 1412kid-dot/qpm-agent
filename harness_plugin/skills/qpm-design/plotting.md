@@ -1,5 +1,7 @@
 # QPM独立绘图接口
 
+先查询 `qpm_conventions(topic="plotting")`。metric使用导出列名，例如 `period_um`；`period`等无歧义能力名兼容映射。GVD必须选择如 `signal_gvd_fs2_mm` 的波角色。dataset默认nominal，也支持curves别名；公差数据使用结果中的精确键。series支持linewidth=0.1..10。任务原本已经导出曲线时先交付已有图，不为重复绘图反复读源码。
+
 `qpm_plot`支持sources来源别名、preset配置、script受限脚本、name预设名称、output_dir可选输出。省略preset时读取保存预设；source可替换为新run。qpm_plot_preset旧run_id入口仍可使用。
 
 每条series支持source、metric、x（默认wavelength_nm）、dataset（默认nominal）、label、color、linestyle、marker、axis（left/right）、kind（line/scatter）、unit、scale、normalize、x_range、interpolate_nm、smooth_window。扩展指标通过metric_units及metric_definitions注明单位与定义。

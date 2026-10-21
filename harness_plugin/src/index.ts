@@ -8,6 +8,12 @@ import { randomUUID, createHash } from 'node:crypto';
 import { createInterface } from 'node:readline';
 
 async function atomicJson(file,value){const tmp=file+'.'+randomUUID()+'.tmp';await writeFile(tmp,JSON.stringify(value,null,2),'utf8');await rename(tmp,file);}
+function studyView(value){
+  if(!value?.state)return value;
+  const events=value.state.events||[];
+  return {...value,state:{...value.state,event_count:events.length,events:events.slice(-3).map(e=>({seq:e.seq,time:e.time,kind:e.kind,
+    data:{run_id:e.data?.run_id,reason:e.data?.reason,evidence:e.data?.evidence}}))},events_file:path.join(value.output_dir,'events.json')};
+}
 export { Config };
 export const name='qpm-runtime';
 
@@ -99,6 +105,36 @@ export default class QpmRuntime extends Service {
     const result=JSON.parse(await readFile(path.join(run.output_dir,'result.json'),'utf8'));
     return {run,...result,curves:result.curves?.slice(0,10),note:'仅返回前10行；完整数据保存在result.json'};
   }
+  async delivery(exec,args){
+    if(!!args.run_id===!!args.job_id)throw Error('指定run_id或job_id其中一个');
+    const output=args.run_id?(await resolveRun(this,exec,args.run_id)).output_dir:this.record(args.job_id,exec.agent.id).output;
+    const worker=await this.launch('delivery',{run_dir:output},undefined,exec.signal,()=>{},this.workspaceConfig(exec));
+    return worker.done;
+  }
+  async completedDelivery(agent,jobId){
+    const record=this.record(jobId,agent.id);
+    if(['starting','running'].includes(record.status))return null;
+    const file=path.join(record.output,'delivery.json');
+    if(existsSync(file))return JSON.parse(await readFile(file,'utf8'));
+    if(record.result?.delivery)return record.result.delivery;
+    return null;
+  }
+  deliveryJobRunning(agent,jobId){return ['starting','running'].includes(this.record(jobId,agent.id).status);}
+  deliveryAuditRoot(agent){
+    const root=this.workspaceConfig({agent}).outputRoot;
+    return path.join(root,'.qpm','deliveries',createHash('sha256').update(agent.id).digest('hex').slice(0,16));
+  }
+  async deliveryFallback(agent,d,turn,auditRoot){
+    // Persist an explicit program notice. Do not fabricate model-authored text.
+    const root=auditRoot||path.dirname(d.evidence.delivery_file);await mkdir(root,{recursive:true});
+    const text=d.summary||await readFile(path.join(path.dirname(d.evidence.delivery_file),'summary.md'),'utf8').catch(()=>JSON.stringify(d));
+    await atomicJson(path.join(root,'delivery-fallback.json'),{source:'dsh-qpm-agent deterministic report',model_delivery_passed:false,text,
+      report:d.evidence.report_file,process:d.evidence.process_file});
+    const fallback=path.join(root,'delivery-fallback.md');
+    await writeFile(fallback,'# 程序生成的基础摘要\n\n模型解释未完成。以下内容直接来自保存结果。\n\n'+text,'utf8');
+    agent.session.append('deliverables/presented',{turn,callId:'qpm-delivery-'+randomUUID(),
+      files:[{path:fallback,description:'程序生成的基础摘要；模型解释未完成'}]});
+  }
   snapshot(){return snapshot(this.config);}
   async launch(action, task, output, signal, progress=()=>{}, captured=this.snapshot()) {
     const executable=await this.ctx.subprocess.resolveExecutable(captured.pythonExecutable);
@@ -106,8 +142,8 @@ export default class QpmRuntime extends Service {
     const handle=this.ctx.subprocess.spawn({argv:[executable,'-u','-m','qpm_simulation.harness_worker'],
       cwd:action==='postprocess_export'?path.dirname(executable):existsSync(captured.outputRoot)?path.resolve(captured.outputRoot):path.dirname(new URL(import.meta.url).pathname.replace(/^\/(\w:)/,'$1')),env:{...plotEnv,PYTHONUTF8:'1',PYTHONDONTWRITEBYTECODE:'1',...(captured.pythonModuleRoot?{PYTHONPATH:captured.pythonModuleRoot}:{})},
       stdio:{stdin:'pipe',stdout:'pipe',stderr:{maxBytes:16384}},graceMs:5000,signal});
-    let value,problem; const worker={cancel:async()=>{
-      if(output) await writeFile(path.join(output,'.cancel'),'cancel').catch(()=>{});
+    let value,problem; const worker={cancel:async(reason='user')=>{
+      if(output) await writeFile(path.join(output,reason==='budget'?'.deadline':'.cancel'),reason).catch(()=>{});
       if(handle.stdin&&!handle.stdin.destroyed) handle.stdin.write(JSON.stringify({action:'cancel'})+'\n');
       const finished=await Promise.race([handle.done.then(()=>true,()=>true),new Promise(resolve=>{const timer=setTimeout(()=>resolve(false),30000);timer.unref?.();})]);
       if(!finished)await handle.terminate(); await handle.waitForExit();
@@ -132,7 +168,70 @@ export default class QpmRuntime extends Service {
   async query(action,raw,signal,exec) {
     const c=exec?.agent?.session?.header?.cwd?this.workspaceConfig(exec):this.snapshot(); 
     const task=raw?(action==='conventions'?raw:prepareTask(raw,c,false)):undefined; const worker=await this.launch(action,task,undefined,signal,()=>{},c);
-    return worker.done;
+    const value=await worker.done;
+    if(action==='doctor')return {...value,deployment:{default_backend:c.defaultBackend,comsol_enabled:c.enableComsol,
+      budget_ceilings:{max_solver_calls:c.maxSolverCalls,max_geometry_count:c.maxGeometryCount,max_wall_time_s:c.maxWallTimeS},max_research_decisions:20}};
+    if(action==='capabilities'&&value?.validation){
+      const v=value.validation,physics=v.physics||{};
+      return {...value,validation:{release:v.release,physics:{representative_acceptance_passed:physics.representative_acceptance_passed,
+        scope:'代表性物理检查通过；不代表所有材料、晶向、几何及非线性过程均已验证。'},
+        plugin_workflow:'插件当前已实现范围内的工作流已完成初步验收。',
+        future_scope:'超出当前插件能力范围的语义任务和更完整的自主研究流程将在后续版本扩展。'},
+        limitations:(value.limitations||[]).filter(x=>!String(x).toLowerCase().includes('semantic')&&!String(x).toLowerCase().includes('autonomous research acceptance'))
+          .concat('当前插件能力范围外的语义需求和更完整自主研究流程将在后续版本扩展。')};
+    }
+    return value;
+  }
+  async research(exec,args){
+    const c=this.workspaceConfig(exec),request=structuredClone(args);
+    if(request.command==='create'){
+      request.spec.task=prepareTask(request.spec.task,c,false);
+      request.ceilings={max_geometry_count:c.maxGeometryCount,max_solver_calls:c.maxSolverCalls,max_wall_time_s:c.maxWallTimeS,max_decisions:20};
+      await this.writableRun(exec,{output_dir:path.join(c.outputRoot,'studies')});
+    }
+    const worker=await this.launch('research',request,undefined,exec.signal,()=>{},c);
+    return studyView(await worker.done);
+  }
+  async researchStep(ctx,exec,args){
+    const c=this.workspaceConfig(exec),id=args.study_id;
+    if(!/^[a-f0-9]{32}$/.test(id))throw Error('invalid study_id');
+    const output=path.join(c.outputRoot,'studies',id);
+    await this.writableRun(exec,{output_dir:output});
+    if(args.action.kind==='cancel')return this.research(exec,{command:'step',...args});
+    if(!exec.agent?.id)throw Error('研究动作需要当前会话');
+    if(this.running)throw Error('已有QPM任务运行；先等待或取消');
+    const status=await this.research(exec,{command:'status',study_id:id});
+    c.pythonModuleRoot=status.implementation_root;
+    if(['evaluate','refine','verify','resume'].includes(args.action.kind))prepareTask(status.spec.task,c,true);
+    // Reading is available for previous studies; a new execution must also
+    // respect today's deployment ceilings, not only its saved task budget.
+    for(const [key,limit] of Object.entries({max_solver_calls:c.maxSolverCalls,max_geometry_count:c.maxGeometryCount,max_wall_time_s:c.maxWallTimeS}))
+      if(status.spec.budget[key]>limit)throw Error('研究预算高于当前插件设置：'+key);
+    this.running++;
+    let jobId;
+    const record={owner:exec.agent.id,output,status:'starting',result:null};
+    try{
+      jobId=ctx.jobs.start({kind:'qpm',label:'QPM研究：'+args.action.kind,owner:exec.agent.id,run:handle=>{
+        let worker,cancelled=false,deadline=false,timer;
+        const done=(async()=>{
+          record.status='running';
+          try{
+            if(cancelled)return {status:'killed'};
+            worker=await this.launch('research',{command:'step',study_id:id,action:args.action},output,exec.signal,
+              msg=>handle.updateProgress(msg.message||msg.stage),c);
+            timer=setTimeout(()=>{deadline=true;void worker.cancel('budget').catch(()=>{});},Math.max(1,status.remaining.max_wall_time_s)*1000+120000);
+            if(cancelled)await worker.cancel();
+            record.result=studyView(await worker.done);record.status=record.result.state?.status||'completed';
+            handle.append(JSON.stringify({study_id:id,status:record.status})+'\n');
+            return {status:cancelled?'killed':'completed',detail:record.status,result:record.result};
+          }catch(e){record.status=cancelled?'cancelled':deadline?'paused':'failed';record.error=deadline?'研究时间预算耗尽；保留检查点':String(e);return {status:cancelled?'killed':'failed',detail:record.error};}
+          finally{clearTimeout(timer);this.running--;await atomicJson(path.join(output,'research-job.json'),record).catch(()=>{});}
+        })();
+        return {done,cancel:()=>{cancelled=true;void writeFile(path.join(output,'.cancel'),'user cancellation').catch(()=>{});if(worker)void worker.cancel().catch(()=>{});}};
+      }});
+      this.records.set(jobId,record);
+      return {job_id:jobId,study_id:id,output_dir:output,status:'background'};
+    }catch(e){this.running--;throw e;}
   }
   submit(ctx,exec,raw,label,resumed,designId) {
     const c=this.workspaceConfig(exec,!!resumed?.snapshot);if(resumed?.snapshot){c.pythonModuleRoot=resumed.snapshot.pythonModuleRoot;c.sourceVersion=resumed.snapshot.sourceVersion;} const owner=exec.agent?.id;

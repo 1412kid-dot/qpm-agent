@@ -1,0 +1,415 @@
+{
+  "schema_version": "0.1",
+  "package": "qpm_simulation",
+  "solver_side_effects_on_import": false,
+  "package_version": "0.1.0",
+  "validation": {
+    "release": "0.1.0",
+    "physics": {
+      "representative_acceptance_passed": true,
+      "scope": "代表性物理检查通过；不代表所有材料、晶向、几何及非线性过程均已验证。"
+    },
+    "plugin_workflow": "插件当前已实现范围内的工作流已完成初步验收。",
+    "future_scope": "超出当前插件能力范围的语义任务和更完整的自主研究流程将在后续版本扩展。"
+  },
+  "independent_runtime": {
+    "contract": "qpm-job/1",
+    "requires_harness": false,
+    "cli_groups": [
+      "job",
+      "study",
+      "operation",
+      "extension",
+      "jsa-reweight"
+    ],
+    "job_actions": [
+      "submit",
+      "list",
+      "status",
+      "events",
+      "wait",
+      "pause",
+      "cancel",
+      "resume",
+      "result",
+      "artifacts",
+      "study-submit"
+    ],
+    "concurrency": "one executable job per workspace",
+    "process_ownership": "Windows Job Object / POSIX process group"
+  },
+  "joint_spectrum": {
+    "task_kind": "jsa",
+    "process": "SPDC",
+    "pump_shapes": [
+      "gaussian",
+      "sech2",
+      "top_hat",
+      "custom"
+    ],
+    "bandwidth": "intensity FWHM; frequency-defined analytic shapes; THz or explicit nm-width conversion",
+    "outputs": [
+      "complex JSA",
+      "relative JSI",
+      "pump intensity",
+      "phase matching intensity",
+      "masked phase",
+      "NPZ",
+      "CSV",
+      "PNG"
+    ],
+    "reweight": "saved complex phase matching, fixed grating, zero additional solver calls",
+    "scope": "low-gain lossless relative spectrum, constant coupling prefactor; not absolute pair rate, purity or full tensor certification"
+  },
+  "design_contract": "qpm-design/1",
+  "convention_topics": [
+    "overview",
+    "crystal",
+    "geometry",
+    "wavelengths",
+    "metrics",
+    "routing",
+    "extensions",
+    "templates",
+    "research",
+    "quality",
+    "plotting"
+  ],
+  "research_service": {
+    "contract": "qpm-study/1",
+    "persistent": true,
+    "max_decisions": 20,
+    "actions": [
+      "evaluate",
+      "refine",
+      "verify",
+      "resume",
+      "recover",
+      "pause",
+      "finalize",
+      "cancel"
+    ],
+    "llm_loop_owner": "external caller (CLI, Harness or future Agent); research service does not call a model"
+  },
+  "phase_matching": {
+    "directions": [
+      "FORWARD",
+      "BACKWARD"
+    ],
+    "role_order": [
+      "pump",
+      "signal",
+      "idler"
+    ],
+    "backward_signs": [
+      1,
+      1,
+      -1
+    ],
+    "type_ii": "period and linear metrics supported; tensor efficiency not yet bridged into unified service",
+    "mode_search": "6-mode tracking, 20-mode robust/prediction cap; current user-updated FEM"
+  },
+  "extension_interfaces": [
+    "adapt_task(dict)->dict",
+    "analyze_result(context)->analysis"
+  ],
+  "combinations": [
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": true,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LN",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": true,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LN",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "x",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Z",
+        "lab_y": "X",
+        "lab_z": "Y"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TE0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": false,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "AIR",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    },
+    {
+      "material": "LT",
+      "cut": "z",
+      "mode": "TM0",
+      "cladding": "SIO2",
+      "axes": {
+        "lab_x": "Y",
+        "lab_y": "Z",
+        "lab_z": "X"
+      },
+      "linear_metrics": true,
+      "default_d33": true,
+      "status": "implemented; representative evidence only, not full-combination certification",
+      "representative_evidence": false,
+      "full_combination_certified": false
+    }
+  ],
+  "entry_points": [
+    "describe_capabilities",
+    "validate_task",
+    "plan_task",
+    "run_task",
+    "postprocess",
+    "search"
+  ],
+  "processes": [
+    "SHG",
+    "SFG",
+    "DFG",
+    "SPDC"
+  ],
+  "metrics": {
+    "beta1": "ps/mm",
+    "gvd": "fs²/mm",
+    "D": "ps/nm/km",
+    "gvm": "ps/m",
+    "thickness_sensitivity": "d(delta_beta)/dt, m^-1/nm",
+    "period": "um",
+    "normalized_efficiency": "W^-1 m^-2",
+    "process_coefficient": "W^-1"
+  },
+  "plots": [
+    "fixed-structure curves",
+    "real tolerance endpoint envelopes",
+    "SPDC spectral PMF heatmap",
+    "SFG spectral period heatmap"
+  ],
+  "limitations": [
+    "demo data synthetic",
+    "no absolute SPDC pair rate",
+    "scalar dominant-component nonlinear model only",
+    "no general propagation azimuth",
+    "representative LN x-cut evidence only; see validation scope",
+    "SPDC normalized_efficiency and process_coefficient are unavailable",
+    "Harness integration distributed as a separate plugin bundle",
+    "当前插件能力范围外的语义需求和更完整自主研究流程将在后续版本扩展。"
+  ]
+}
+

@@ -62,6 +62,16 @@
       "idler"
     ],
     "pump_role": "highest frequency even for SHG/SFG; not necessarily the experimental input named pump",
+    "formulas": {
+      "beta": "beta_j = 2*pi*n_eff,j/lambda_vac,j [m^-1]",
+      "mismatch": "delta_beta = sigma_h*beta_h - sigma_1*beta_1 - sigma_2*beta_2 [m^-1]",
+      "grating": "K_m = 2*pi*m/Lambda; residual = delta_beta-K_m",
+      "period": "Lambda = 2*pi*abs(m)/abs(delta_beta); delta_beta=0 is natural phase matching, not zero period",
+      "exchange": "Fixed directions: forward degenerate exchange is invariant; backward degenerate and forward nondegenerate polarization exchange generally are not. Relabeling complete wave tuples is invariant.",
+      "exchange_scope": "Invariance of a sum of propagation constants does not imply invariance of each role-specific beta1_j=d beta_j/d omega_j. For the same nonzero |m|, finite positive periods are equal iff |delta_beta_A|=|delta_beta_B|, including opposite signs.",
+      "grating_amplitude": "K_m=2*pi*m/Lambda remains defined. At 50% duty cycle the Fourier coefficient vanishes for nonzero even m; K_m itself does not vanish. At other duty cycles even orders can have nonzero coefficients."
+    },
+    "phase_matching_direction": "FORWARD: (+,+,+) in BOTH orders. BACKWARD: (+,+,-) in high,low1,low2 order; (+,-,+) ONLY in standalone low1,low2,high order. These tuples are propagation-direction multipliers, not the subtraction signs in delta_beta. This is distinct from the crystal propagation axis.",
     "center_nm": "SHG fundamental; SPDC twice fixed 1D pump wavelength; SFG/DFG signal scan center",
     "SHG": "[axis/2, axis, axis]; default 1550±50 nm step20, plus center",
     "SPDC_1d": "pump=center_nm/2 fixed; scan signal=axis, idler=(1/pump-1/signal)^-1",
@@ -79,7 +89,9 @@
       "thickness_sensitivity": "m^-1/nm",
       "normalized_efficiency": "W^-1 m^-2",
       "process_coefficient": "W^-1",
-      "pmf": "dimensionless"
+      "pmf": "dimensionless",
+      "jsa": "relative amplitude",
+      "jsi": "relative intensity"
     },
     "gvm": "signed (ng_pump-ng_signal)/c in ps/m, plus absolute curve; signal-idler GVM requires new indicator extension",
     "gvd": "beta2=d²beta/domega²; objective wavelength is the scan axis, role selects actual wave; default three-point wavelength difference at ±2 nm; isolated anomalies limited to ceil(10%) per curve may upgrade to5/7; explicit5/7 supported; never9; convergence unverified unless requested",
@@ -139,5 +151,87 @@
       "code": "import math\n\ndef analyze_result(context):\n    rows=context.get(\"curves\", [])\n    if not rows:\n        raise ValueError(\"requires fixed/search exported curves with role beta1\")\n    x=[];y=[];valid=[]\n    for row in rows:\n        a=row.get(\"signal_beta1_ps_mm\");b=row.get(\"idler_beta1_ps_mm\")\n        ok=bool(row.get(\"valid\")) and all(type(v) in (int,float) and math.isfinite(v) for v in (a,b))\n        x.append(row[\"wavelength_nm\"]);y.append((a-b)*1000 if ok else None);valid.append(ok)\n    measured=[abs(v) for v in y if v is not None]\n    return {\"metrics\":[{\"name\":\"max_abs_signal_idler_gvm\", \"value\":max(measured) if measured else None,\n              \"valid\":bool(measured), \"unit\":\"ps/m\", \"definition\":\"max measured abs(beta1_signal-beta1_idler)*1000; no interpolation over missing points\",\n              \"source\":\"curves.signal_beta1_ps_mm and curves.idler_beta1_ps_mm\"}],\n            \"curves\":[{\"name\":\"signal_idler_gvm\",\"x\":x,\"y\":y,\"valid\":valid,\"x_unit\":\"nm\",\"y_unit\":\"ps/m\",\n              \"definition\":\"signed (beta1_signal-beta1_idler)*1000\"}],\n            \"notes\":[\"Additional analysis preserves source validation; missing points remain null.\"]}\n",
       "tests": "from extension import analyze_result\n\ndef test_units_sign_and_missing():\n    result=analyze_result({\"curves\":[\n      {\"wavelength_nm\":1530,\"signal_beta1_ps_mm\":7,\"idler_beta1_ps_mm\":8,\"valid\":True},\n      {\"wavelength_nm\":1550,\"signal_beta1_ps_mm\":None,\"idler_beta1_ps_mm\":8,\"valid\":False},\n      {\"wavelength_nm\":1570,\"signal_beta1_ps_mm\":9,\"idler_beta1_ps_mm\":8,\"valid\":True}]})\n    assert result[\"curves\"][0][\"y\"]==[-1000,None,1000]\n    assert result[\"metrics\"][0][\"value\"]==1000\n\ndef test_no_successful_samples():\n    result=analyze_result({\"curves\":[{\"wavelength_nm\":1550,\"valid\":False}]})\n    assert result[\"metrics\"][0][\"valid\"] is False\n    assert result[\"metrics\"][0][\"value\"] is None\n\ndef test_no_curve_data():\n    try:\n        analyze_result({\"curves\":[]})\n    except ValueError:\n        return\n    raise AssertionError(\"missing source data must fail\")\n"
     }
+  },
+  "research": {
+    "contract_version": "qpm-study/1",
+    "create_spec": {
+      "task": "existing QPM Task",
+      "goal": "plain language objective",
+      "constraints": "explicit geometry min/max/step; do not invent manufacturing bounds",
+      "budget": "max_solver_calls,max_geometry_count,max_wall_time_s,max_decisions",
+      "knowledge": {
+        "capabilities_checked": true,
+        "conventions_version": "qpm-design/1"
+      }
+    },
+    "tools": [
+      "qpm_study_create",
+      "qpm_studies",
+      "qpm_study_status",
+      "qpm_study_result",
+      "qpm_study_diagnose",
+      "qpm_study_propose",
+      "qpm_study_step"
+    ],
+    "action": {
+      "kind": [
+        "evaluate",
+        "refine",
+        "verify",
+        "resume",
+        "recover",
+        "pause",
+        "finalize",
+        "cancel"
+      ],
+      "reason": "brief visible scientific purpose",
+      "evidence": "recorded run_ids; required after first batch",
+      "geometry": "legal candidate; optional for nominal",
+      "stencil_points": "refine only:3/5/7"
+    },
+    "workflow": "Compute a batch, inspect actual result/diagnostic, choose the next action. Existing run_task remains a shortcut.",
+    "state": "study_id persists across sessions. Interrupted actions recover then resume the same run; cancellation never auto-restarts.",
+    "budget": "all batches share saved ceilings. Predictions are not observations.",
+    "scientific_claim": "target_met requires tolerance and numerical verification. Synthetic numerics remain synthetic; independent science acceptance is separate.",
+    "scope": "No arbitrary solver changes or generated-code execution in stages0-2; existing extension workflow remains available."
+  },
+  "quality": {
+    "checks": [
+      "mode identity and field overlap",
+      "missing values and failures",
+      "derivative-order agreement",
+      "mesh and step comparison",
+      "required metric availability"
+    ],
+    "allowed_checks": "within permissions/budgets: legal candidates,3/5/7-point derivatives,refined mesh and half-step verification",
+    "overlap": "remove global phase; interpolate onto shared grid; >=90% domain coverage and overlap>=0.95 for verification",
+    "gvd_tolerance": "default max(1fs²/mm,5% of target value); stability tolerance is distinct from design target tolerance",
+    "mode_failure": "Do not treat mode rejection as transient process exit. Inspect evidence before retrying or changing candidate.",
+    "report": "input,defaults,versions,raw data,candidates,failures,quality,budget,decisions,unresolved items,reproduction"
+  },
+  "plotting": {
+    "metric_columns": {
+      "period": "period_um",
+      "normalized_efficiency": "normalized_efficiency_W_inv_m_inv2",
+      "process_coefficient": "process_coefficient_W_inv",
+      "thickness_sensitivity": "thickness_sensitivity_m_inv_nm_inv"
+    },
+    "role_metrics": "signal_gvd_fs2_mm,pump_gvd_fs2_mm,idler_gvd_fs2_mm; beta1 and D likewise require role",
+    "dataset": "nominal (or curves alias), or an exact key from result.tolerances such as thickness_nm_-5",
+    "example": {
+      "series": [
+        {
+          "metric": "period_um",
+          "dataset": "nominal",
+          "linewidth": 1.5
+        }
+      ],
+      "errors": true,
+      "formats": [
+        "png"
+      ]
+    },
+    "source": "Use qpm_runs full run_id; qpm_source prefixes python/ or plugin/ are for implementation, not arbitrary result files",
+    "default_figures": "qpm_status/qpm_result already list exported figures; replot only when additional formatting is needed"
   }
 }

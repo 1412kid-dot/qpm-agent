@@ -1,6 +1,0 @@
-{
-  "material":"LT", "crystal_cut":"z", "cladding":"AIR",
-  "geometry":{"thickness_nm":600,"etch_depth_nm":300,"top_width_nm":1800},
-  "process":"SHG", "modes":{"pump":"TM0","signal":"TM0","idler":"TM0"},
-  "wavelengths_nm":[1550], "center_nm":1550, "backend":"demo"
-}

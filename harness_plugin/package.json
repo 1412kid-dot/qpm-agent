@@ -1,6 +1,6 @@
 {
   "name": "dsh-qpm-agent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "LN/LT QPM design tools and Chinese agent preset for DeepSeek Harness",
   "exports": {
@@ -31,7 +31,8 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
     "@deepseek-ai/schemastery": "3.18.4",
-    "@deepseek-ai/dsh-tools": "0.2.0-rc.2"
+    "@deepseek-ai/dsh-tools": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",

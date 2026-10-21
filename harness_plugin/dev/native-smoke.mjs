@@ -7,8 +7,8 @@ import fs from 'node:fs/promises';import path from 'node:path';
 const ctx=new Context();const owner={id:'runtime-test',ctx};
 class Agents extends Service{constructor(c){super(c,'agents');}get(id){return id===owner.id?owner:undefined;}}
 new Agents(ctx);new Local(ctx);new Jobs(ctx,{maxConcurrentJobsPerOwner:1,retainBytes:65536,settledRetainBytes:16384,pumpPollMs:20});ctx.jobs.attachController('qpm-test');
-const outputRoot=path.resolve('.fixtures/native-results');await fs.mkdir(outputRoot,{recursive:true});owner.session={header:{cwd:outputRoot}};
-new Qpm(ctx,{pythonExecutable:(process.env.QPM_TEST_PYTHON||'python'),pythonModuleRoot:path.resolve('..'),outputRoot,extensionsRoot:path.resolve('.fixtures/extensions'),defaultBackend:'demo',enableComsol:false,lengthMm:5,wavelengthStepNm:20,dispersionStepNm:2,fwDerivativeNm:2,shDerivativeNm:1,thicknessDerivativeNm:2,thicknessToleranceNm:0,widthToleranceNm:0,maxGeometryCount:32,maxSolverCalls:1000,maxWallTimeS:60,maxIterations:5,threads:4,comsolVersion:'6.4',comsolBin:'',approvedExtensions:''});
+const coreRoot=path.resolve(process.env.QPM_CORE_ROOT||'..');const outputRoot=path.resolve('.fixtures/native-results');await fs.mkdir(outputRoot,{recursive:true});owner.session={header:{cwd:outputRoot}};
+new Qpm(ctx,{pythonExecutable:(process.env.QPM_TEST_PYTHON||'python'),pythonModuleRoot:coreRoot,outputRoot,extensionsRoot:path.resolve('.fixtures/extensions'),defaultBackend:'demo',enableComsol:false,lengthMm:5,wavelengthStepNm:20,dispersionStepNm:2,fwDerivativeNm:2,shDerivativeNm:1,thicknessDerivativeNm:2,thicknessToleranceNm:0,widthToleranceNm:0,maxGeometryCount:32,maxSolverCalls:1000,maxWallTimeS:60,maxIterations:5,threads:4,comsolVersion:'6.4',comsolBin:'',approvedExtensions:''});
 const tools=new Map();ctx.provide('tools',{register(t){tools.set(t.name,t);return ()=>tools.delete(t.name);}});apply(ctx);
 const exec={agent:owner,signal:new AbortController().signal};
 console.log('actual desktop SDK query:',Object.keys(await tools.get('qpm_capabilities').execute({},exec)));

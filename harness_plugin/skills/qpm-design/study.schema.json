@@ -1,0 +1,863 @@
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string",
+      "description": "Scientific goal; numeric target is task.objective"
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "type": "string",
+          "enum": [
+            "LN",
+            "LT"
+          ],
+          "description": "Lithium niobate / lithium tantalate"
+        },
+        "crystal_cut": {
+          "type": "string",
+          "enum": [
+            "x",
+            "z"
+          ],
+          "description": "Film normal crystal X or Z; NOT propagation direction"
+        },
+        "cladding": {
+          "type": "string",
+          "enum": [
+            "AIR",
+            "SIO2"
+          ],
+          "description": "Air / silica upper cladding"
+        },
+        "geometry": {
+          "type": "object",
+          "properties": {
+            "thickness_nm": {
+              "type": "number",
+              "description": "Total film thickness, nm"
+            },
+            "etch_depth_nm": {
+              "type": "number",
+              "description": "Etch depth nm; 0<etch<thickness"
+            },
+            "top_width_nm": {
+              "type": "number",
+              "description": "Rib TOP width, nm"
+            },
+            "sidewall_angle_deg": {
+              "type": "number",
+              "description": "Degrees from HORIZONTAL, not normal; default67; 0<angle<90"
+            }
+          },
+          "required": [
+            "thickness_nm",
+            "etch_depth_nm",
+            "top_width_nm"
+          ],
+          "additionalProperties": false,
+          "description": ""
+        },
+        "process": {
+          "type": "string",
+          "enum": [
+            "SHG",
+            "SFG",
+            "DFG",
+            "SPDC"
+          ],
+          "description": "Frequency conversion process"
+        },
+        "phase_matching_direction": {
+          "type": "string",
+          "enum": [
+            "FORWARD",
+            "BACKWARD"
+          ],
+          "description": "Default FORWARD; BACKWARD reverses low2/idler. High,low1,low2 signs=(+,+,-), standalone SHG low1,low2,high=(+,-,+)."
+        },
+        "center_nm": {
+          "type": "number",
+          "description": "SHG fundamental center; SPDC twice fixed pump; SFG/DFG signal center. 775→1550 SPDC: center_nm=1550."
+        },
+        "wavelengths_nm": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "description": "Positive finite value; see qpm_conventions for unit and role."
+          },
+          "description": "Exact display signal/fundamental wavelength list nm"
+        },
+        "wavelength_range_nm": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "description": "Positive finite value; see qpm_conventions for unit and role."
+          },
+          "description": "[min,max] signal/fundamental scan nm; include center"
+        },
+        "wavelength_step_nm": {
+          "type": "number",
+          "description": "wavelength_step_nm in nm; default display20, thickness2, low2, high1, dispersion2"
+        },
+        "modes": {
+          "type": "object",
+          "properties": {
+            "pump": {
+              "type": "string",
+              "enum": [
+                "TE0",
+                "TM0"
+              ],
+              "description": "pump mode: TE dominant lab Ex, TM dominant lab Ey"
+            },
+            "signal": {
+              "type": "string",
+              "enum": [
+                "TE0",
+                "TM0"
+              ],
+              "description": "signal mode: TE dominant lab Ex, TM dominant lab Ey"
+            },
+            "idler": {
+              "type": "string",
+              "enum": [
+                "TE0",
+                "TM0"
+              ],
+              "description": "idler mode: TE dominant lab Ex, TM dominant lab Ey"
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "pump is HIGH frequency role; x-cut defaultTE0; z-cut defaultTM0"
+        },
+        "length_mm": {
+          "type": "number",
+          "description": "Device length mm, default5; coefficient not actual conversion percentage"
+        },
+        "length_defaulted": {
+          "type": "boolean",
+          "description": "Runtime provenance for default length"
+        },
+        "nonlinear_coefficient_pm_v": {
+          "oneOf": [
+            {
+              "type": "number",
+              "description": "User-established scalar d_eff pm/V; not full tensor. Never invent value."
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "backend": {
+          "type": "string",
+          "enum": [
+            "demo",
+            "comsol",
+            "replay"
+          ],
+          "description": "demo synthetic; comsol requires settings enable; replay requires cache path"
+        },
+        "task_kind": {
+          "type": "string",
+          "enum": [
+            "fixed",
+            "search",
+            "spectral_2d",
+            "jsa"
+          ],
+          "description": "Curves / search / spectral heatmap / relative complex SPDC JSA"
+        },
+        "search_axes": {
+          "type": "object",
+          "properties": {
+            "thickness_nm": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number",
+                      "description": "Lower legal bound"
+                    },
+                    "max": {
+                      "type": "number",
+                      "description": "Upper legal bound"
+                    },
+                    "step": {
+                      "type": "number",
+                      "description": "Explicit manufacturing grid step; never output off-grid candidate"
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false,
+                  "description": ""
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "etch_depth_nm": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number",
+                      "description": "Lower legal bound"
+                    },
+                    "max": {
+                      "type": "number",
+                      "description": "Upper legal bound"
+                    },
+                    "step": {
+                      "type": "number",
+                      "description": "Explicit manufacturing grid step; never output off-grid candidate"
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false,
+                  "description": ""
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "top_width_nm": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number",
+                      "description": "Lower legal bound"
+                    },
+                    "max": {
+                      "type": "number",
+                      "description": "Upper legal bound"
+                    },
+                    "step": {
+                      "type": "number",
+                      "description": "Explicit manufacturing grid step; never output off-grid candidate"
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false,
+                  "description": ""
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sidewall_angle_deg": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "min": {
+                      "type": "number",
+                      "description": "Lower legal bound"
+                    },
+                    "max": {
+                      "type": "number",
+                      "description": "Upper legal bound"
+                    },
+                    "step": {
+                      "type": "number",
+                      "description": "Explicit manufacturing grid step; never output off-grid candidate"
+                    }
+                  },
+                  "required": [
+                    "min",
+                    "max"
+                  ],
+                  "additionalProperties": false,
+                  "description": ""
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "null bounds select nominal±10%; explicit step restricts legal grid"
+        },
+        "objective": {
+          "type": "object",
+          "properties": {
+            "metric": {
+              "type": "string",
+              "enum": [
+                "gvd",
+                "gvm",
+                "thickness_sensitivity"
+              ],
+              "description": "Search target; GVM signed pump-signal"
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "pump",
+                "signal",
+                "idler"
+              ],
+              "description": "GVD wave role; GVM is always pump-signal"
+            },
+            "wavelength_nm": {
+              "type": "number",
+              "description": "SCAN axis wavelength nm; actual role wavelength is derived"
+            },
+            "tolerance": {
+              "oneOf": [
+                {
+                  "type": "number",
+                  "description": "Absolute acceptance tolerance in target units; absent means closest only"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reduction": {
+              "type": "string",
+              "enum": [
+                "at_wavelength",
+                "zero_in_band",
+                "max_abs_over_band"
+              ],
+              "description": "Target reduction"
+            },
+            "verification_abs_tolerance": {
+              "type": "number",
+              "description": "Numerical stability comparison tolerance"
+            }
+          },
+          "required": [
+            "metric"
+          ],
+          "additionalProperties": false,
+          "description": ""
+        },
+        "tolerances_nm": {
+          "type": "object",
+          "properties": {
+            "thickness_nm": {
+              "type": "number",
+              "description": "Real ± tolerance nm; independent of derivative step"
+            },
+            "top_width_nm": {
+              "type": "number",
+              "description": "Real ± tolerance nm; independent of derivative step"
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": ""
+        },
+        "thickness_derivative_nm": {
+          "type": "number",
+          "description": "thickness_derivative_nm in nm; default display20, thickness2, low2, high1, dispersion2"
+        },
+        "fw_derivative_nm": {
+          "type": "number",
+          "description": "fw_derivative_nm in nm; default display20, thickness2, low2, high1, dispersion2"
+        },
+        "sh_derivative_nm": {
+          "type": "number",
+          "description": "sh_derivative_nm in nm; default display20, thickness2, low2, high1, dispersion2"
+        },
+        "dispersion_step_nm": {
+          "type": "number",
+          "description": "dispersion_step_nm in nm; default display20, thickness2, low2, high1, dispersion2"
+        },
+        "dispersion_stencil_points": {
+          "type": "integer",
+          "enum": [
+            3,
+            5,
+            7
+          ],
+          "description": "Default3; anomaly-limited 5/7; explicit 5/7 supported; never9"
+        },
+        "adaptive_dispersion": {
+          "type": "boolean",
+          "description": "Defaulttrue; limited isolated anomaly upgrades 3→5→7"
+        },
+        "dispersion_absolute_tolerance_fs2_mm": {
+          "type": "number",
+          "description": "Nonnegative order-comparison tolerance fs²/mm, default1"
+        },
+        "dispersion_relative_tolerance": {
+          "type": "number",
+          "description": "Nonnegative relative order-comparison tolerance, default0.05"
+        },
+        "dispersion_refinement_wavelengths_nm": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "description": "Positive finite value; see qpm_conventions for unit and role."
+          },
+          "description": "Explicit display wavelengths to check with5 points; default empty"
+        },
+        "dispersion_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "pump",
+              "signal",
+              "idler"
+            ],
+            "description": "Wave role"
+          },
+          "description": "GVD-only defaults objective role; explicit selection avoids unused bands"
+        },
+        "verify_numerics": {
+          "type": "boolean",
+          "description": "Defaultfalse; true explicitly adds refined mesh and half-step validation; cost must be planned"
+        },
+        "thickness_etch_relation": {
+          "type": "string",
+          "enum": [
+            "fixed_etch",
+            "fixed_slab"
+          ],
+          "description": "Thickness perturbation keeps etch depth or slab fixed"
+        },
+        "wavelength_axes_nm": {
+          "type": "object",
+          "properties": {
+            "signal_nm": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "description": "Positive finite value; see qpm_conventions for unit and role."
+              },
+              "description": "2D increasing signal wavelengths nm"
+            },
+            "idler_nm": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "description": "Positive finite value; see qpm_conventions for unit and role."
+              },
+              "description": "2D increasing idler wavelengths nm"
+            },
+            "fixed_idler_nm": {
+              "type": "number",
+              "description": "Required fixed idler wavelength for SFG/DFG 1D"
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "2D pump VARIES by energy conservation; fixed-pump rectangular SPDC not supported"
+        },
+        "pump_envelope": {
+          "type": "object",
+          "properties": {
+            "shape": {
+              "type": "string",
+              "enum": [
+                "gaussian",
+                "sech2",
+                "top_hat",
+                "custom"
+              ],
+              "description": "Frequency-domain intensity shape; zero phase for analytic shapes"
+            },
+            "center_wavelength_nm": {
+              "type": "number",
+              "description": "Positive finite value; see qpm_conventions for unit and role."
+            },
+            "intensity_fwhm_thz": {
+              "type": "number",
+              "description": "Positive finite value; see qpm_conventions for unit and role."
+            },
+            "intensity_fwhm_nm": {
+              "type": "number",
+              "description": "Positive finite value; see qpm_conventions for unit and role."
+            },
+            "axis": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "description": "Positive finite value; see qpm_conventions for unit and role."
+              },
+              "description": "Custom increasing spectral axis"
+            },
+            "axis_unit": {
+              "type": "string",
+              "enum": [
+                "THz",
+                "nm"
+              ],
+              "description": "Custom spectral coordinate"
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Custom magnitude samples"
+            },
+            "value_kind": {
+              "type": "string",
+              "enum": [
+                "intensity_density",
+                "amplitude_density"
+              ],
+              "description": "Density per declared coordinate"
+            },
+            "phase_rad": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Optional custom phase, radians"
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "JSA pump: exactly one positive intensity FWHM for analytic shapes"
+        },
+        "jsa": {
+          "type": "object",
+          "properties": {
+            "signal_frequency_thz": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "description": "Positive finite value; see qpm_conventions for unit and role."
+              },
+              "description": "Increasing signal frequencies"
+            },
+            "idler_frequency_thz": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "description": "Positive finite value; see qpm_conventions for unit and role."
+              },
+              "description": "Increasing idler frequencies"
+            },
+            "grating_period_um": {
+              "type": "number",
+              "description": "Positive finite value; see qpm_conventions for unit and role."
+            },
+            "qpm_order": {
+              "type": "integer"
+            },
+            "reference_signal_nm": {
+              "type": "number",
+              "description": "Positive finite value; see qpm_conventions for unit and role."
+            },
+            "reference_idler_nm": {
+              "type": "number",
+              "description": "Positive finite value; see qpm_conventions for unit and role."
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "Fixed signed grating order, or matching at explicit reference pair; defaults to axis middle samples, independent of pump envelope"
+        },
+        "spectral_solve_step_nm": {
+          "type": "number",
+          "description": "spectral_solve_step_nm in nm; default display20, thickness2, low2, high1, dispersion2"
+        },
+        "budget": {
+          "type": "object",
+          "properties": {
+            "max_geometry_count": {
+              "type": "number",
+              "description": "Cannot exceed plugin settings ceiling"
+            },
+            "max_solver_calls": {
+              "type": "number",
+              "description": "Cannot exceed plugin settings ceiling"
+            },
+            "max_wall_time_s": {
+              "type": "number",
+              "description": "Cannot exceed plugin settings ceiling"
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": ""
+        },
+        "full_scan": {
+          "type": "boolean",
+          "description": "Only true when explicitly asked to traverse entire legal grid"
+        },
+        "max_additional_geometries": {
+          "type": "integer",
+          "description": "Additional structures nonnegative; actual geometry budget enforced"
+        },
+        "batch_size": {
+          "type": "integer",
+          "description": "Adaptive batch size 1..4"
+        },
+        "solver": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Advanced mesh/solver settings; paths managed by settings, physics keys validated by Python"
+        },
+        "replay_dir": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Validated cache directory"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "replay_source_backend": {
+          "type": "string",
+          "enum": [
+            "demo",
+            "comsol"
+          ],
+          "description": "Source identity checked before replay"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Record assumptions explicitly"
+        },
+        "schema_version": {
+          "type": "string",
+          "description": "Task format version"
+        },
+        "propagation_axis": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "description": "Crystal propagation axis: x-cut supports Y only; z-cut supports X only"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "required_metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "period",
+              "beta1",
+              "gvd",
+              "D",
+              "gvm",
+              "thickness_sensitivity",
+              "normalized_efficiency",
+              "process_coefficient",
+              "pmf",
+              "jsa",
+              "jsi"
+            ],
+            "description": "Explicitly required output; unsupported requests rejected, not dropped"
+          },
+          "description": "Copy user-required metrics here; new metrics need postprocess extension"
+        },
+        "provided_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Runtime provenance: fields supplied before defaults"
+        }
+      },
+      "required": [
+        "material",
+        "crystal_cut",
+        "cladding",
+        "geometry"
+      ],
+      "additionalProperties": false,
+      "description": "QPM task: query qpm_conventions templates before building unfamiliar tasks."
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "thickness_nm": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "step": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "description": ""
+        },
+        "etch_depth_nm": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "step": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "description": ""
+        },
+        "top_width_nm": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "step": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "description": ""
+        },
+        "sidewall_angle_deg": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            },
+            "step": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "min",
+            "max"
+          ],
+          "additionalProperties": false,
+          "description": ""
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "description": "Only geometry min/max/step constraints; material/modes belong in task"
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "max_solver_calls": {
+          "type": "number"
+        },
+        "max_geometry_count": {
+          "type": "number"
+        },
+        "max_wall_time_s": {
+          "type": "number"
+        },
+        "max_decisions": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "description": "Shared study ceilings. max_decisions counts scientific actions, not read-only queries."
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "evaluate": {
+          "type": "boolean"
+        },
+        "refine_derivatives": {
+          "type": "boolean"
+        },
+        "verify": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "description": ""
+    },
+    "knowledge": {
+      "type": "object",
+      "properties": {
+        "capabilities_checked": {
+          "type": "boolean"
+        },
+        "conventions_version": {
+          "type": "string",
+          "enum": [
+            "qpm-design/1"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "capabilities_checked",
+        "conventions_version"
+      ],
+      "additionalProperties": false,
+      "description": ""
+    }
+  },
+  "required": [
+    "task",
+    "knowledge"
+  ],
+  "additionalProperties": false,
+  "description": "Persistent QPM research spec; query conventions research before unfamiliar use."
+}
